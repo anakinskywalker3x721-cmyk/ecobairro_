@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoBairro — Bairros mais limpos começam com você</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
+
+  :root{
+    --ink:#12140F;
+    --ink-soft:#1B2016;
+    --forest:#213A1B;
+    --acid:#8DC63F;
+    --acid-soft:#A9D866;
+    --clay:#C97B4A;
+    --cream:#FAF8F2;
+    --charcoal:#23261F;
+    --charcoal-soft:#5B6152;
+    --line: rgba(141,198,63,0.25);
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--charcoal);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{
+    font-family:'Space Grotesk',sans-serif;
+    margin:0;
+    line-height:1.08;
+  }
+  p{margin:0;}
+  a{color:inherit;text-decoration:none;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.72rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--acid);
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:16px;height:1px;
+    background:var(--acid);
+    display:inline-block;
+  }
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding:0 28px;
+  }
+
+  /* ---------- HEADER ---------- */
+  header{
+    position:sticky;
+    top:0;
+    z-index:50;
+    background:var(--ink);
+  }
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 28px;
+    max-width:1080px;
+    margin:0 auto;
+  }
+  .logo{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:1.35rem;
+  }
+  .logo .leaf{
+    width:34px;height:34px;
+    flex-shrink:0;
+  }
+  .logo .eco{color:var(--acid-soft);}
+  .logo .bairro{color:var(--clay);}
+
+  nav.pillnav{
+    display:flex;
+    gap:10px;
+    padding:0 28px 18px;
+    max-width:1080px;
+    margin:0 auto;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  nav.pillnav::-webkit-scrollbar{display:none;}
+  nav.pillnav a{
+    flex-shrink:0;
+    font-size:0.85rem;
+    font-weight:500;
+    color:#D8DCCB;
+    background:var(--ink-soft);
+    border:1px solid rgba(255,255,255,0.06);
+    padding:9px 18px;
+    border-radius:999px;
+    transition:background .2s ease, color .2s ease, transform .2s ease;
+  }
+  nav.pillnav a:hover{
+    background:var(--acid);
+    color:var(--ink);
+    transform:translateY(-1px);
+  }
+  nav.pillnav a.brand{
+    background:var(--forest);
+    color:var(--acid-soft);
+  }
+
+  /* ---------- ROOT DIVIDER (signature element) ---------- */
+  .root-divider{
+    display:block;
+    width:100%;
+    height:64px;
+  }
+  .root-divider svg{
+    width:100%;
+    height:100%;
+    display:block;
+  }
+  .root-divider path{
+    stroke:var(--acid);
+    stroke-width:1.4;
+    fill:none;
+    stroke-dasharray:340;
+    stroke-dashoffset:340;
+    transition:stroke-dashoffset 1.4s cubic-bezier(.22,.61,.36,1);
+  }
+  .root-divider.in-view path{stroke-dashoffset:0;}
+  .root-divider circle{
+    fill:var(--acid);
+    opacity:0;
+    transition:opacity .6s ease .9s;
+  }
+  .root-divider.in-view circle{opacity:1;}
+
+  /* ---------- DARK SECTIONS ---------- */
+  .dark-section{
+    position:relative;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(141,198,63,0.14), transparent 55%),
+      linear-gradient(180deg, var(--ink) 0%, #0D0F0A 100%);
+    color:var(--acid-soft);
+    overflow:hidden;
+    padding:88px 0 96px;
+  }
+  .dark-section .texture{
+    position:absolute;
+    inset:0;
+    opacity:0.35;
+    pointer-events:none;
+  }
+  .hero-grid{
+    display:grid;
+    grid-template-columns:1.1fr 0.9fr;
+    gap:56px;
+    align-items:center;
+    position:relative;
+  }
+  .hero-copy h1{
+    font-size:clamp(2.1rem, 4vw, 2.9rem);
+    color:var(--acid-soft);
+    margin:16px 0 22px;
+  }
+  .hero-copy p{
+    font-size:1.02rem;
+    line-height:1.7;
+    color:#C9D8B8;
+    max-width:52ch;
+  }
+  .hero-illustration{
+    position:relative;
+    aspect-ratio:1/1;
+  }
+
+  /* ---------- LIGHT SECTIONS ---------- */
+  .section{
+    padding:80px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .section h2{
+    font-size:clamp(1.6rem,3vw,2.1rem);
+    color:var(--charcoal);
+    margin:14px 0 20px;
+  }
+  .section h2 span{color:var(--acid);}
+  .section p.lead{
+    font-size:1.02rem;
+    line-height:1.75;
+    color:var(--charcoal-soft);
+    max-width:62ch;
+  }
+  .two-col{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:52px;
+    align-items:start;
+  }
+
+  /* ---------- GUIDE CARDS ---------- */
+  .guides-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:22px;
+    margin-top:36px;
+  }
+  .guide-card{
+    background:var(--ink);
+    border-radius:18px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .guide-card:hover{
+    transform:translateY(-4px);
+    box-shadow:0 16px 32px -12px rgba(33,58,27,0.35);
+  }
+  .guide-thumb{
+    height:130px;
+    background:linear-gradient(135deg, var(--forest), var(--ink));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .guide-body{
+    padding:20px 20px 24px;
+  }
+  .guide-body h3{
+    font-size:1.02rem;
+    color:var(--cream);
+    line-height:1.35;
+    margin-bottom:14px;
+  }
+  .watch-link{
+    font-size:0.82rem;
+    font-weight:600;
+    color:var(--acid);
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .watch-link:hover{color:var(--acid-soft);}
+
+  /* ---------- CRITICAL POINTS ---------- */
+  .critical-visual{
+    background:var(--forest);
+    border-radius:20px;
+    aspect-ratio:4/3;
+    position:relative;
+    overflow:hidden;
+  }
+  .stat-row{
+    display:flex;
+    gap:28px;
+    margin-top:28px;
+    flex-wrap:wrap;
+  }
+  .stat{
+    min-width:140px;
+  }
+  .stat b{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:1.9rem;
+    color:var(--clay);
+    display:block;
+  }
+  .stat span{
+    font-size:0.8rem;
+    color:var(--charcoal-soft);
+  }
+
+  /* ---------- BUTTONS ---------- */
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:13px 28px;
+    border-radius:999px;
+    font-weight:600;
+    font-size:0.92rem;
+    border:1.5px solid var(--acid);
+    color:var(--acid);
+    background:transparent;
+    cursor:pointer;
+    transition:background .2s ease, color .2s ease, transform .2s ease;
+  }
+  .btn:hover{
+    background:var(--acid);
+    color:var(--ink);
+    transform:translateY(-2px);
+  }
+  .btn.solid{
+    background:var(--acid);
+    color:var(--ink);
+  }
+  .btn.solid:hover{
+    background:var(--acid-soft);
+  }
+  .btn-center{
+    display:flex;
+    justify-content:center;
+    margin-top:34px;
+  }
+
+  /* ---------- QUICK TIPS ---------- */
+  .tips-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:18px;
+    margin-top:36px;
+  }
+  .tip{
+    background:var(--cream);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:22px 20px;
+  }
+  .tip .num{
+    font-family:'JetBrains Mono',monospace;
+    color:var(--acid);
+    font-size:0.78rem;
+    margin-bottom:10px;
+    display:block;
+  }
+  .tip h3{
+    font-size:0.98rem;
+    margin-bottom:8px;
+    color:var(--charcoal);
+  }
+  .tip p{
+    font-size:0.86rem;
+    color:var(--charcoal-soft);
+    line-height:1.55;
+  }
+
+  /* ---------- FINAL CTA ---------- */
+  .cta-section{
+    text-align:center;
+    padding:100px 0 110px;
+  }
+  .cta-section h2{
+    color:var(--acid-soft);
+    font-size:clamp(1.7rem,3.4vw,2.4rem);
+    max-width:20ch;
+    margin:14px auto 22px;
+  }
+  .cta-section p{
+    color:#C9D8B8;
+    max-width:56ch;
+    margin:0 auto 32px;
+    line-height:1.75;
+  }
+
+  footer{
+    background:var(--ink);
+    color:#7C8570;
+    padding:30px 0;
+    font-size:0.82rem;
+    text-align:center;
+  }
+  footer b{color:var(--acid-soft);}
+
+  .reveal{
+    opacity:0;
+    transform:translateY(18px);
+    transition:opacity .7s ease, transform .7s ease;
+  }
+  .reveal.in-view{opacity:1;transform:translateY(0);}
+
+  @media (max-width:860px){
+    .hero-grid, .two-col{grid-template-columns:1fr;}
+    .guides-grid{grid-template-columns:1fr 1fr;}
+    .tips-grid{grid-template-columns:1fr 1fr;}
+  }
+  @media (max-width:560px){
+    .guides-grid{grid-template-columns:1fr;}
+    .tips-grid{grid-template-columns:1fr;}
+    .hero-illustration{display:none;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    .reveal, .root-divider path, .root-divider circle{transition:none;opacity:1;transform:none;stroke-dashoffset:0;}
+  }
+
+  /* ---------- RELATOS / VOLUNTARIADO ---------- */
+  .reports-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px,1fr));
+    gap:20px;
+    margin-top:32px;
+  }
+  .report-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:16px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .report-photo{
+    width:100%;
+    aspect-ratio:4/3;
+    object-fit:cover;
+    background:var(--forest);
+    display:block;
+  }
+  .report-body{
+    padding:16px 18px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .report-address{
+    font-weight:600;
+    font-size:0.95rem;
+    color:var(--charcoal);
+  }
+  .status-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.7rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:4px 10px;
+    border-radius:999px;
+    width:fit-content;
+  }
+  .status-badge.aberto{background:rgba(201,123,74,0.15);color:var(--clay);}
+  .status-badge.andamento{background:rgba(141,198,63,0.16);color:#5C8A22;}
+  .status-badge.atrasado{background:rgba(200,60,60,0.14);color:#B23A3A;}
+  .status-badge.concluido{background:rgba(141,198,63,0.22);color:#3E6D14;}
+
+  .volunteer-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:0.82rem;
+    color:var(--charcoal-soft);
+  }
+  .volunteer-avatars{
+    display:flex;
+  }
+  .volunteer-avatars span{
+    width:26px;height:26px;
+    border-radius:50%;
+    background:var(--forest);
+    color:var(--acid-soft);
+    font-size:0.7rem;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border:2px solid #fff;
+    margin-left:-8px;
+  }
+  .volunteer-avatars span:first-child{margin-left:0;}
+  .deadline-text{font-size:0.8rem;color:var(--charcoal-soft);}
+  .deadline-text.late{color:#B23A3A;font-weight:600;}
+
+  .report-actions{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:4px;
+  }
+  .btn-small{
+    display:inline-flex;
+    align-items:center;
+    padding:8px 14px;
+    border-radius:999px;
+    font-weight:600;
+    font-size:0.78rem;
+    border:1.5px solid var(--acid);
+    color:var(--acid);
+    background:transparent;
+    cursor:pointer;
+    transition:background .2s ease, color .2s ease;
+  }
+  .btn-small:hover{background:var(--acid);color:var(--ink);}
+  .btn-small.outline-clay{border-color:var(--clay);color:var(--clay);}
+  .btn-small.outline-clay:hover{background:var(--clay);color:#fff;}
+  .btn-small.ghost{border-color:var(--line);color:var(--charcoal-soft);}
+  .btn-small.ghost:hover{background:var(--charcoal-soft);color:#fff;}
+
+  .empty-note{
+    font-size:0.9rem;
+    color:var(--charcoal-soft);
+    font-style:italic;
+    margin-top:20px;
+  }
+
+  /* ---------- SEÇÃO CONCLUÍDOS ---------- */
+  .done-section{
+    background:linear-gradient(180deg, var(--cream), #F1EEE3);
+  }
+  .done-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(260px,1fr));
+    gap:20px;
+    margin-top:32px;
+  }
+  .done-card{
+    position:relative;
+    background:var(--ink);
+    border-radius:16px;
+    overflow:hidden;
+  }
+  .done-card img{
+    width:100%;
+    aspect-ratio:4/3;
+    object-fit:cover;
+    display:block;
+    opacity:0.9;
+  }
+  .done-ribbon{
+    position:absolute;
+    top:12px;
+    left:12px;
+    background:var(--acid);
+    color:var(--ink);
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.68rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:5px 10px;
+    border-radius:999px;
+    font-weight:600;
+  }
+  .done-body{
+    padding:16px 18px 20px;
+  }
+  .done-body .who{
+    font-size:0.8rem;
+    color:var(--acid-soft);
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  .done-body p{
+    font-size:0.86rem;
+    color:#D8DCCB;
+    line-height:1.6;
+  }
+
+  /* ---------- MODAIS ---------- */
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(18,20,15,0.62);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:200;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:#fff;
+    border-radius:18px;
+    width:100%;
+    max-width:440px;
+    padding:28px 26px;
+    max-height:88vh;
+    overflow-y:auto;
+  }
+  .modal-box h3{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:1.2rem;
+    color:var(--charcoal);
+    margin-bottom:6px;
+  }
+  .modal-box .modal-sub{
+    font-size:0.85rem;
+    color:var(--charcoal-soft);
+    margin-bottom:18px;
+  }
+  .field{
+    margin-bottom:16px;
+  }
+  .field label{
+    display:block;
+    font-size:0.8rem;
+    font-weight:600;
+    color:var(--charcoal);
+    margin-bottom:6px;
+  }
+  .field input[type="text"],
+  .field input[type="date"],
+  .field textarea{
+    width:100%;
+    border:1.5px solid var(--line);
+    border-radius:10px;
+    padding:10px 12px;
+    font-family:'Inter',sans-serif;
+    font-size:0.9rem;
+    color:var(--charcoal);
+    background:var(--cream);
+  }
+  .field textarea{resize:vertical;min-height:70px;}
+  .field input[type="file"]{
+    width:100%;
+    font-size:0.82rem;
+  }
+  .preview-thumb{
+    margin-top:10px;
+    width:100%;
+    max-height:160px;
+    object-fit:cover;
+    border-radius:10px;
+    display:none;
+  }
+  .modal-actions{
+    display:flex;
+    gap:10px;
+    margin-top:8px;
+  }
+  .modal-actions .btn-small{padding:10px 18px;font-size:0.85rem;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topbar">
+    <div class="logo">
+      <svg class="leaf" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="19" stroke="#8DC63F" stroke-width="1.4"/>
+        <path d="M20 30C20 30 12 26 12 17C12 12 16 9 20 9C24 9 28 12 28 17C28 26 20 30 20 30Z" fill="#8DC63F"/>
+        <path d="M20 30V14" stroke="#12140F" stroke-width="1.3"/>
+      </svg>
+      <span class="eco">Eco</span><span class="bairro">Bairro</span>
+    </div>
+  </div>
+  <nav class="pillnav">
+    <a href="#topo" class="brand">EcoBairro</a>
+    <a href="#guias">Guias Práticos</a>
+    <a href="#pontos">Pontos Críticos</a>
+    <a href="#dicas">Dicas Rápidas</a>
+  </nav>
+</header>
+
+<section class="dark-section" id="topo">
+  <div class="wrap hero-grid">
+    <div class="hero-copy reveal">
+      <span class="eyebrow">Maranguape · CE</span>
+      <h1>O que é Sustentabilidade Urbana?</h1>
+      <p>Sustentabilidade urbana significa equilibrar o crescimento das nossas cidades com o respeito ao meio ambiente. No nosso dia a dia, ela acontece quando cuidamos das calçadas, descartamos o lixo no lugar correto e eliminamos costumes que poluem as ruas.</p>
+      <p style="margin-top:16px;">Transformar nosso bairro em um espaço sustentável é garantir mais saúde, limpeza e qualidade de vida para todos os moradores.</p>
+    </div>
+    <div class="hero-illustration reveal">
+      <svg viewBox="0 0 320 320" width="100%" height="100%">
+        <defs>
+          <radialGradient id="g1" cx="50%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="#213A1B"/>
+            <stop offset="100%" stop-color="#12140F"/>
+          </radialGradient>
+        </defs>
+        <circle cx="160" cy="160" r="150" fill="url(#g1)"/>
+        <g stroke="#8DC63F" stroke-width="2" fill="none" opacity="0.9">
+          <path d="M160 250 C160 210 130 200 120 170 C150 180 160 200 160 220"/>
+          <path d="M160 250 C160 210 190 200 200 170 C170 180 160 200 160 220"/>
+          <path d="M160 250 C160 190 160 150 160 100"/>
+        </g>
+        <g fill="#8DC63F">
+          <ellipse cx="160" cy="95" rx="14" ry="26" transform="rotate(-18 160 95)"/>
+          <ellipse cx="160" cy="95" rx="14" ry="26" transform="rotate(18 160 95)"/>
+          <ellipse cx="160" cy="70" rx="12" ry="22"/>
+        </g>
+        <path d="M60 260 Q160 280 260 260" stroke="#C97B4A" stroke-width="2" fill="none" opacity="0.6"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<div class="root-divider" id="rd1">
+  <svg viewBox="0 0 1080 64" preserveAspectRatio="none">
+    <path d="M0 10 C 200 10, 260 54, 460 54 S 760 10, 1080 10"/>
+    <circle cx="460" cy="54" r="4"/>
+  </svg>
+</div>
+
+<section class="section" id="sobre">
+  <div class="wrap">
+    <div class="two-col">
+      <div class="reveal">
+        <span class="eyebrow">O projeto</span>
+        <h2>O que é o <span>EcoBairro</span>?</h2>
+        <p class="lead">O EcoBairro é uma plataforma digital criada para transformar a realidade das nossas ruas e comunidades. Nosso objetivo é unir os moradores no combate à poluição local, eliminando o acúmulo de lixo e hábitos nocivos ao meio ambiente.</p>
+      </div>
+      <div class="reveal">
+        <p class="lead">Através de conteúdos práticos, guias educativos e o mapeamento de áreas críticas, o site funciona como uma ferramenta para engajar a população, incentivar o descarte correto de resíduos e construir bairros muito mais limpos, saudáveis e sustentáveis.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="root-divider" id="rd2">
+  <svg viewBox="0 0 1080 64" preserveAspectRatio="none">
+    <path d="M1080 10 C 880 10, 820 54, 620 54 S 320 10, 0 10"/>
+    <circle cx="620" cy="54" r="4"/>
+  </svg>
+</div>
+
+<section class="section" id="guias">
+  <div class="wrap">
+    <span class="eyebrow">Aprenda fazendo</span>
+    <h2>Guias <span>Práticos</span></h2>
+    <p class="lead">Aprenda o passo a passo para aplicar a sustentabilidade no seu dia a dia através de vídeos curtos e objetivos. Mude costumes simples e transforme a realidade do nosso bairro.</p>
+
+    <div class="guides-grid">
+      <div class="guide-card reveal">
+        <div class="guide-thumb">
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+            <rect x="6" y="18" width="44" height="30" rx="4" stroke="#8DC63F" stroke-width="2"/>
+            <path d="M14 18l6-10h16l6 10" stroke="#8DC63F" stroke-width="2"/>
+            <circle cx="28" cy="33" r="8" stroke="#C97B4A" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="guide-body">
+          <h3>Guia de Descarte de Resíduos Eletrônicos</h3>
+          <a class="watch-link" href="https://youtu.be/o-yhbPLb9qU?si=6Dr7E_wbyXzyqroZ" target="_blank" rel="noopener">Assistir no YouTube →</a>
+        </div>
+      </div>
+
+      <div class="guide-card reveal">
+        <div class="guide-thumb">
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+            <circle cx="28" cy="28" r="18" stroke="#8DC63F" stroke-width="2"/>
+            <path d="M28 12v16l10 6" stroke="#8DC63F" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="guide-body">
+          <h3>Guia da Coleta Seletiva</h3>
+          <a class="watch-link" href="https://youtu.be/bbRv3j08m1A?si=gI_IpSU-1ZzqziKv" target="_blank" rel="noopener">Assistir no YouTube →</a>
+        </div>
+      </div>
+
+      <div class="guide-card reveal">
+        <div class="guide-thumb">
+          <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+            <path d="M28 10c8 6 16 12 16 22a16 16 0 1 1-32 0c0-10 8-16 16-22Z" stroke="#8DC63F" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="guide-body">
+          <h3>Guia de Compostagem Doméstica.</h3>
+          <a class="watch-link" href="https://youtu.be/MuLKWv0TdaE?si=HoaD7sTJ59wA8RuS" target="_blank" rel="noopener">Assistir no YouTube →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="root-divider" id="rd3">
+  <svg viewBox="0 0 1080 64" preserveAspectRatio="none">
+    <path d="M0 10 C 200 10, 260 54, 460 54 S 760 10, 1080 10"/>
+    <circle cx="460" cy="54" r="4"/>
+  </svg>
+</div>
+
+<section class="section" id="pontos">
+  <div class="wrap">
+    <div class="two-col">
+      <div class="reveal">
+        <span class="eyebrow">Diagnóstico do bairro</span>
+        <h2>Pontos <span>Críticos</span></h2>
+        <p class="lead">O descarte inadequado de lixo e o acúmulo de entulhos em vias públicas são desafios graves espalhados por todo o Brasil. Esse cenário gera poluição visual, entope bueiros causando alagamentos e atrai vetores de doenças, afetando diretamente a saúde e a qualidade de vida das comunidades urbanas.</p>
+        <div class="stat-row">
+          <div class="stat"><b>+30</b><span>pontos críticos mapeados</span></div>
+          <div class="stat"><b>4</b><span>bairros monitorados</span></div>
+        </div>
+      </div>
+      <div class="critical-visual reveal">
+        <svg viewBox="0 0 400 300" width="100%" height="100%">
+          <rect width="400" height="300" fill="#213A1B"/>
+          <path d="M0 220 L80 200 L140 230 L200 190 L260 215 L330 195 L400 210 V300 H0 Z" fill="#12140F" opacity="0.6"/>
+          <g fill="#C97B4A" opacity="0.85">
+            <rect x="60" y="150" width="26" height="30" rx="3"/>
+            <rect x="95" y="140" width="20" height="40" rx="3"/>
+            <circle cx="150" cy="165" r="14"/>
+            <rect x="230" y="150" width="30" height="32" rx="3"/>
+          </g>
+          <circle cx="150" cy="120" r="6" fill="#8DC63F"/>
+          <path d="M150 120 v-16" stroke="#8DC63F" stroke-width="2"/>
+          <text x="200" y="40" fill="#8DC63F" font-family="JetBrains Mono, monospace" font-size="12" text-anchor="middle">ÁREA COM ACÚMULO DE RESÍDUOS</text>
+        </svg>
+      </div>
+    </div>
+
+    <div style="margin-top:64px;" class="two-col">
+      <div class="reveal">
+        <h2 style="font-size:1.5rem;">Como você pode <span>ajudar?</span></h2>
+        <p class="lead" style="margin-top:14px;">Se você identificou um ponto crítico em seu bairro — como acúmulo de lixo na calçada, terrenos baldios com entulho ou descarte irregular de móveis e eletrônicos —, nos informe!</p>
+        <p class="lead" style="margin-top:14px;">Use o botão abaixo para relatar o local e nos ajudar a mapear as áreas que precisam de atenção e conscientização urgente.</p>
+        <div class="btn-center" style="justify-content:flex-start;">
+          <a class="btn solid" href="#" onclick="openReportModal();return false;">Relatar Ponto Crítico</a>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:56px;">
+      <span class="eyebrow">Voluntariado em ação</span>
+      <h2 style="font-size:1.5rem;margin-top:14px;">Pontos relatados pela <span>comunidade</span></h2>
+      <p class="lead" style="margin-top:12px;">Veja os locais já relatados por moradores. Escolha um ponto e vire voluntário para ajudar a resolver.</p>
+      <div class="reports-grid" id="reportsGrid"></div>
+      <p class="empty-note" id="reportsEmpty" style="display:none;">Nenhum ponto relatado ainda. Seja o primeiro a relatar!</p>
+    </div>
+  </div>
+</section>
+
+<section class="section done-section" id="concluidos">
+  <div class="wrap">
+    <span class="eyebrow">Missão cumprida</span>
+    <h2>Trabalhos <span>Concluídos</span></h2>
+    <p class="lead">O cantinho especial de quem já transformou um ponto crítico do bairro. Inspire-se e ajude o próximo!</p>
+    <div class="done-grid" id="doneGrid"></div>
+    <p class="empty-note" id="doneEmpty" style="display:none;">Nenhum trabalho concluído ainda — o primeiro pode ser o seu!</p>
+  </div>
+</section>
+
+<div class="root-divider" id="rd4">
+  <svg viewBox="0 0 1080 64" preserveAspectRatio="none">
+    <path d="M1080 10 C 880 10, 820 54, 620 54 S 320 10, 0 10"/>
+    <circle cx="620" cy="54" r="4"/>
+  </svg>
+</div>
+
+<section class="section" id="dicas" style="border-bottom:none;">
+  <div class="wrap">
+    <span class="eyebrow">Comece hoje</span>
+    <h2>Dicas <span>Rápidas</span></h2>
+    <p class="lead">Pequenas mudanças de hábito que cabem no seu dia a dia — sem esforço, com impacto real na limpeza do bairro.</p>
+
+    <div class="tips-grid">
+      <div class="tip reveal"><span class="num">01</span><h3>Separe o lixo reciclável</h3><p>Papel, plástico, vidro e metal em recipientes diferentes do lixo orgânico.</p></div>
+      <div class="tip reveal"><span class="num">02</span><h3>Não jogue entulho na rua</h3><p>Procure pontos de coleta autorizados pela prefeitura para descarte de móveis e obras.</p></div>
+      <div class="tip reveal"><span class="num">03</span><h3>Composte restos orgânicos</h3><p>Cascas e sobras de comida viram adubo em vez de irem para o aterro.</p></div>
+      <div class="tip reveal"><span class="num">04</span><h3>Conscientize os vizinhos</h3><p>Uma conversa simples já ajuda a mudar hábitos de toda a rua.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="dark-section cta-section" id="relatar">
+  <div class="wrap reveal">
+    <span class="eyebrow" style="justify-content:center;">Junte-se ao movimento</span>
+    <h2>Gostou do projeto? Se você quer cuidar do seu bairro, da nossa cidade e do planeta, junte-se a nós!</h2>
+    <p>Pequenas atitudes diárias transformam a nossa realidade. Convide seus vizinhos, amigos e familiares para participarem dessa ideia e nos ajudarem a deixar Maranguape muito mais limpa, saudável e sustentável para todos.</p>
+    <a class="btn" href="#" onclick="copyEcoBairroLink(this); return false;">Compartilhar o EcoBairro</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap"><b>EcoBairro</b> — feito por moradores de Maranguape, para Maranguape.</div>
+</footer>
+
+<!-- MODAL: Relatar Ponto Crítico -->
+<div class="modal-overlay" id="modalReport">
+  <div class="modal-box">
+    <h3>Relatar Ponto Crítico</h3>
+    <p class="modal-sub">Informe o endereço e uma foto do local para que voluntários possam ajudar.</p>
+    <form id="formReport" onsubmit="submitReport(event)">
+      <div class="field">
+        <label for="reportAddress">Endereço do local</label>
+        <input type="text" id="reportAddress" placeholder="Rua, número, bairro" required>
+      </div>
+      <div class="field">
+        <label for="reportPhoto">Foto do local</label>
+        <input type="file" id="reportPhoto" accept="image/*" required onchange="previewImage(this,'reportPreview')">
+        <img class="preview-thumb" id="reportPreview">
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn-small" style="background:var(--acid);color:var(--ink);">Relatar ponto</button>
+        <button type="button" class="btn-small ghost" onclick="closeModal('modalReport')">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Ser voluntário -->
+<div class="modal-overlay" id="modalVolunteer">
+  <div class="modal-box">
+    <h3>Quero ser voluntário</h3>
+    <p class="modal-sub">Informe seu nome e o prazo que você se compromete a cumprir essa tarefa.</p>
+    <form id="formVolunteer" onsubmit="submitVolunteer(event)">
+      <div class="field">
+        <label for="volName">Seu nome</label>
+        <input type="text" id="volName" placeholder="Como quer ser identificado" required>
+      </div>
+      <div class="field">
+        <label for="volDeadline">Prazo para concluir</label>
+        <input type="date" id="volDeadline" required>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn-small" style="background:var(--acid);color:var(--ink);">Confirmar voluntariado</button>
+        <button type="button" class="btn-small ghost" onclick="closeModal('modalVolunteer')">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Prolongar prazo -->
+<div class="modal-overlay" id="modalExtend">
+  <div class="modal-box">
+    <h3>Prolongar prazo</h3>
+    <p class="modal-sub">O prazo dessa tarefa venceu. Defina uma nova data para concluir.</p>
+    <form id="formExtend" onsubmit="submitExtend(event)">
+      <div class="field">
+        <label for="extendDeadline">Novo prazo</label>
+        <input type="date" id="extendDeadline" required>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn-small" style="background:var(--acid);color:var(--ink);">Salvar novo prazo</button>
+        <button type="button" class="btn-small ghost" onclick="closeModal('modalExtend')">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Adicionar voluntário a uma tarefa atrasada -->
+<div class="modal-overlay" id="modalAddHelper">
+  <div class="modal-box">
+    <h3>Adicionar voluntário</h3>
+    <p class="modal-sub">Convide mais alguém para ajudar a terminar essa tarefa e definam um novo prazo juntos.</p>
+    <form id="formAddHelper" onsubmit="submitAddHelper(event)">
+      <div class="field">
+        <label for="helperName">Nome do novo voluntário</label>
+        <input type="text" id="helperName" required>
+      </div>
+      <div class="field">
+        <label for="helperDeadline">Novo prazo combinado</label>
+        <input type="date" id="helperDeadline" required>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn-small" style="background:var(--acid);color:var(--ink);">Adicionar à tarefa</button>
+        <button type="button" class="btn-small ghost" onclick="closeModal('modalAddHelper')">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Concluir tarefa -->
+<div class="modal-overlay" id="modalComplete">
+  <div class="modal-box">
+    <h3>Marcar tarefa como concluída</h3>
+    <p class="modal-sub">Envie uma foto do resultado. Um texto é opcional, mas ajuda a incentivar outros moradores.</p>
+    <form id="formComplete" onsubmit="submitComplete(event)">
+      <div class="field">
+        <label for="completePhoto">Foto do local depois do trabalho</label>
+        <input type="file" id="completePhoto" accept="image/*" required onchange="previewImage(this,'completePreview')">
+        <img class="preview-thumb" id="completePreview">
+      </div>
+      <div class="field">
+        <label for="completeText">Mensagem (opcional)</label>
+        <textarea id="completeText" placeholder="Conte como foi a experiência de transformar esse ponto..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn-small" style="background:var(--acid);color:var(--ink);">Publicar conclusão</button>
+        <button type="button" class="btn-small ghost" onclick="closeModal('modalComplete')">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const revealEls = document.querySelectorAll('.reveal, .root-divider');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        e.target.classList.add('in-view');
+        io.unobserve(e.target);
+      }
+    });
+  }, {threshold:0.2});
+  revealEls.forEach(el=>io.observe(el));
+</script>
+
+<script>
+  /* ===================== PONTOS CRÍTICOS / VOLUNTARIADO ===================== */
+  const STORAGE_KEY = 'ecobairro_reports_v1';
+  let activeReportId = null; // relato sendo manipulado pelo modal em uso
+
+  function loadReports(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){ /* ignora e recria */ }
+    // dados de amostra, para mostrar como o projeto funciona em andamento
+    return [
+      {
+        id:'seed-1',
+        address:'Rua das Palmeiras, 245 — Centro',
+        photo:'data:image/svg+xml;utf8,' + encodeURIComponent(samplePhotoSVG('#213A1B','Acúmulo de entulho')),
+        status:'andamento',
+        volunteers:[{name:'Marcos Vinícius', deadline: addDays(4)}],
+        completion:null
+      },
+      {
+        id:'seed-2',
+        address:'Av. Beira Rio, 980 — São Francisco',
+        photo:'data:image/svg+xml;utf8,' + encodeURIComponent(samplePhotoSVG('#2b3a1f','Lixo em terreno baldio')),
+        status:'concluido',
+        volunteers:[{name:'Ana Beatriz', deadline: addDays(-2)}],
+        completion:{
+          photo:'data:image/svg+xml;utf8,' + encodeURIComponent(samplePhotoSVG('#8DC63F','Depois: rua limpa')),
+          text:'Levamos duas tardes de sábado com mais três vizinhos. Hoje a rua está limpa e já colocamos uma lixeira comunitária no local!'
+        }
+      }
+    ];
+  }
+
+  function samplePhotoSVG(bg,label){
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="${bg}"/><text x="200" y="155" fill="#ffffff" font-family="sans-serif" font-size="16" text-anchor="middle" opacity="0.75">${label}</text></svg>`;
+  }
+
+  function addDays(n){
+    const d = new Date();
+    d.setDate(d.getDate()+n);
+    return d.toISOString().slice(0,10);
+  }
+
+  function saveReports(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+  }
+
+  let reports = loadReports();
+
+  function isLate(report){
+    if(!report.volunteers.length) return false;
+    const lastDeadline = report.volunteers[report.volunteers.length-1].deadline;
+    return report.status === 'andamento' && lastDeadline < new Date().toISOString().slice(0,10);
+  }
+
+  function fmtDate(iso){
+    const [y,m,d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  function initials(name){
+    return name.trim().split(/\s+/).slice(0,2).map(w=>w[0].toUpperCase()).join('');
+  }
+
+  function renderReports(){
+    const grid = document.getElementById('reportsGrid');
+    const empty = document.getElementById('reportsEmpty');
+    const openAndProgress = reports.filter(r=>r.status!=='concluido');
+    grid.innerHTML = '';
+    empty.style.display = openAndProgress.length ? 'none' : 'block';
+
+    openAndProgress.forEach(r=>{
+      const late = isLate(r);
+      const statusClass = r.status==='aberto' ? 'aberto' : (late ? 'atrasado' : 'andamento');
+      const statusLabel = r.status==='aberto' ? 'Aberto · precisa de voluntário' : (late ? 'Prazo vencido' : 'Em andamento');
+      const lastDeadline = r.volunteers.length ? r.volunteers[r.volunteers.length-1].deadline : null;
+
+      const card = document.createElement('div');
+      card.className = 'report-card';
+      card.innerHTML = `
+        <img class="report-photo" src="${r.photo}" alt="Foto do ponto crítico relatado">
+        <div class="report-body">
+          <span class="status-badge ${statusClass}">${statusLabel}</span>
+          <div class="report-address">${escapeHtml(r.address)}</div>
+          ${r.volunteers.length ? `
+            <div class="volunteer-row">
+              <div class="volunteer-avatars">
+                ${r.volunteers.map(v=>`<span title="${escapeHtml(v.name)}">${initials(v.name)}</span>`).join('')}
+              </div>
+              <span>${r.volunteers.length>1 ? r.volunteers.length+' voluntários nessa tarefa' : 'Voluntário: '+escapeHtml(r.volunteers[0].name)}</span>
+            </div>
+            <div class="deadline-text ${late?'late':''}">Prazo: ${fmtDate(lastDeadline)}${late?' — vencido':''}</div>
+          ` : `<p style="font-size:0.85rem;color:var(--charcoal-soft);">Ainda sem voluntários. Seja o primeiro a ajudar!</p>`}
+          <div class="report-actions">
+            ${r.status==='aberto' ? `<button class="btn-small" onclick="openVolunteerModal('${r.id}')">Quero ser voluntário</button>` : ''}
+            ${r.status==='andamento' && !late ? `<button class="btn-small" onclick="openCompleteModal('${r.id}')">Marcar como concluído</button>` : ''}
+            ${late ? `
+              <button class="btn-small outline-clay" onclick="openExtendModal('${r.id}')">Prolongar prazo</button>
+              <button class="btn-small" onclick="openAddHelperModal('${r.id}')">Adicionar voluntário</button>
+              <button class="btn-small" onclick="openCompleteModal('${r.id}')">Marcar como concluído</button>
+            ` : ''}
+          </div>
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  function renderDone(){
+    const grid = document.getElementById('doneGrid');
+    const empty = document.getElementById('doneEmpty');
+    const done = reports.filter(r=>r.status==='concluido');
+    grid.innerHTML = '';
+    empty.style.display = done.length ? 'none' : 'block';
+
+    done.forEach(r=>{
+      const names = r.volunteers.map(v=>v.name).join(' & ');
+      const card = document.createElement('div');
+      card.className = 'done-card';
+      card.innerHTML = `
+        <span class="done-ribbon">Concluído</span>
+        <img src="${(r.completion && r.completion.photo) || r.photo}" alt="Foto do trabalho concluído">
+        <div class="done-body">
+          <div class="who">${escapeHtml(names)} — ${escapeHtml(r.address)}</div>
+          ${r.completion && r.completion.text ? `<p>${escapeHtml(r.completion.text)}</p>` : `<p>Ponto transformado pela comunidade. 🌱</p>`}
+        </div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  function renderAll(){
+    renderReports();
+    renderDone();
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  /* ---------- Modais ---------- */
+  function openModal(id){ document.getElementById(id).classList.add('open'); }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+  function openReportModal(){
+    document.getElementById('formReport').reset();
+    document.getElementById('reportPreview').style.display='none';
+    openModal('modalReport');
+  }
+  function openVolunteerModal(id){
+    activeReportId = id;
+    document.getElementById('formVolunteer').reset();
+    document.getElementById('volDeadline').min = new Date().toISOString().slice(0,10);
+    openModal('modalVolunteer');
+  }
+  function openExtendModal(id){
+    activeReportId = id;
+    document.getElementById('formExtend').reset();
+    document.getElementById('extendDeadline').min = new Date().toISOString().slice(0,10);
+    openModal('modalExtend');
+  }
+  function openAddHelperModal(id){
+    activeReportId = id;
+    document.getElementById('formAddHelper').reset();
+    document.getElementById('helperDeadline').min = new Date().toISOString().slice(0,10);
+    openModal('modalAddHelper');
+  }
+  function openCompleteModal(id){
+    activeReportId = id;
+    document.getElementById('formComplete').reset();
+    document.getElementById('completePreview').style.display='none';
+    openModal('modalComplete');
+  }
+
+  function previewImage(input, previewId){
+    const file = input.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = document.getElementById(previewId);
+      img.src = e.target.result;
+      img.style.display='block';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* ---------- Submissões ---------- */
+  function submitReport(ev){
+    ev.preventDefault();
+    const address = document.getElementById('reportAddress').value.trim();
+    const fileInput = document.getElementById('reportPhoto');
+    const file = fileInput.files[0];
+    if(!address || !file) return;
+
+    const reader = new FileReader();
+    reader.onload = e=>{
+      reports.unshift({
+        id: 'r-' + Date.now(),
+        address,
+        photo: e.target.result,
+        status:'aberto',
+        volunteers:[],
+        completion:null
+      });
+      saveReports();
+      renderAll();
+      closeModal('modalReport');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function submitVolunteer(ev){
+    ev.preventDefault();
+    const name = document.getElementById('volName').value.trim();
+    const deadline = document.getElementById('volDeadline').value;
+    if(!name || !deadline || !activeReportId) return;
+    const r = reports.find(x=>x.id===activeReportId);
+    if(!r) return;
+    r.volunteers.push({name, deadline});
+    r.status = 'andamento';
+    saveReports();
+    renderAll();
+    closeModal('modalVolunteer');
+  }
+
+  function submitExtend(ev){
+    ev.preventDefault();
+    const deadline = document.getElementById('extendDeadline').value;
+    if(!deadline || !activeReportId) return;
+    const r = reports.find(x=>x.id===activeReportId);
+    if(!r || !r.volunteers.length) return;
+    r.volunteers[r.volunteers.length-1].deadline = deadline;
+    saveReports();
+    renderAll();
+    closeModal('modalExtend');
+  }
+
+  function submitAddHelper(ev){
+    ev.preventDefault();
+    const name = document.getElementById('helperName').value.trim();
+    const deadline = document.getElementById('helperDeadline').value;
+    if(!name || !deadline || !activeReportId) return;
+    const r = reports.find(x=>x.id===activeReportId);
+    if(!r) return;
+    r.volunteers.push({name, deadline});
+    saveReports();
+    renderAll();
+    closeModal('modalAddHelper');
+  }
+
+  function submitComplete(ev){
+    ev.preventDefault();
+    const fileInput = document.getElementById('completePhoto');
+    const file = fileInput.files[0];
+    const text = document.getElementById('completeText').value.trim();
+    if(!file || !activeReportId) return;
+    const r = reports.find(x=>x.id===activeReportId);
+    if(!r) return;
+
+    const reader = new FileReader();
+    reader.onload = e=>{
+      r.status = 'concluido';
+      r.completion = { photo: e.target.result, text };
+      saveReports();
+      renderAll();
+      closeModal('modalComplete');
+      document.getElementById('concluidos').scrollIntoView({behavior:'smooth'});
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // fecha modal clicando fora da caixa
+  document.querySelectorAll('.modal-overlay').forEach(ov=>{
+    ov.addEventListener('click', e=>{
+      if(e.target === ov) ov.classList.remove('open');
+    });
+  });
+
+  renderAll();
+
+  /* ---------- Compartilhar EcoBairro (copiar link) ---------- */
+  function copyEcoBairroLink(){
+    const url = location.href;
+    const showToast = ()=>{
+      let toast = document.getElementById('copyToast');
+      if(!toast){
+        toast = document.createElement('div');
+        toast.id = 'copyToast';
+        toast.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:#8DC63F;color:#12140F;font-family:Inter,sans-serif;font-weight:600;font-size:0.9rem;padding:12px 22px;border-radius:999px;box-shadow:0 10px 24px rgba(0,0,0,0.25);z-index:999;opacity:0;transition:opacity .25s ease, transform .25s ease;';
+        document.body.appendChild(toast);
+      }
+      toast.textContent = 'Link copiado com sucesso!';
+      requestAnimationFrame(()=>{
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+      });
+      clearTimeout(toast._hideTimer);
+      toast._hideTimer = setTimeout(()=>{
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(20px)';
+      }, 2400);
+    };
+
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(showToast).catch(()=>{
+        prompt('Copie o link do EcoBairro:', url);
+      });
+    }else{
+      const temp = document.createElement('input');
+      temp.value = url;
+      document.body.appendChild(temp);
+      temp.select();
+      try{ document.execCommand('copy'); showToast(); }
+      catch(e){ prompt('Copie o link do EcoBairro:', url); }
+      document.body.removeChild(temp);
+    }
+  }
+</script>
+
+</body>
+</html>
