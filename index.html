@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EcoBairro — Bairros mais limpos começam com você</title>
+
+<!-- SDKs do Firebase (Versão compatível com HTML direto) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
 
@@ -119,7 +124,7 @@
     color:var(--acid-soft);
   }
 
-  /* ---------- ROOT DIVIDER (signature element) ---------- */
+  /* ---------- ROOT DIVIDER ---------- */
   .root-divider{
     display:block;
     width:100%;
@@ -155,12 +160,6 @@
     color:var(--acid-soft);
     overflow:hidden;
     padding:88px 0 96px;
-  }
-  .dark-section .texture{
-    position:absolute;
-    inset:0;
-    opacity:0.35;
-    pointer-events:none;
   }
   .hero-grid{
     display:grid;
@@ -390,10 +389,6 @@
     .tips-grid{grid-template-columns:1fr;}
     .hero-illustration{display:none;}
   }
-  @media (prefers-reduced-motion: reduce){
-    html{scroll-behavior:auto;}
-    .reveal, .root-divider path, .root-divider circle{transition:none;opacity:1;transform:none;stroke-dashoffset:0;}
-  }
 
   /* ---------- RELATOS / VOLUNTARIADO ---------- */
   .reports-grid{
@@ -443,7 +438,6 @@
   .status-badge.aberto{background:rgba(201,123,74,0.15);color:var(--clay);}
   .status-badge.andamento{background:rgba(141,198,63,0.16);color:#5C8A22;}
   .status-badge.atrasado{background:rgba(200,60,60,0.14);color:#B23A3A;}
-  .status-badge.concluido{background:rgba(141,198,63,0.22);color:#3E6D14;}
 
   .volunteer-row{
     display:flex;
@@ -628,7 +622,6 @@
     gap:10px;
     margin-top:8px;
   }
-  .modal-actions .btn-small{padding:10px 18px;font-size:0.85rem;}
 </style>
 </head>
 <body>
@@ -755,7 +748,7 @@
           </svg>
         </div>
         <div class="guide-body">
-          <h3>Guia de Compostagem Doméstica.</h3>
+          <h3>Guia de Compostagem Doméstica</h3>
           <a class="watch-link" href="https://youtu.be/MuLKWv0TdaE?si=HoaD7sTJ59wA8RuS" target="_blank" rel="noopener">Assistir no YouTube →</a>
         </div>
       </div>
@@ -857,7 +850,7 @@
     <span class="eyebrow" style="justify-content:center;">Junte-se ao movimento</span>
     <h2>Gostou do projeto? Se você quer cuidar do seu bairro, da nossa cidade e do planeta, junte-se a nós!</h2>
     <p>Pequenas atitudes diárias transformam a nossa realidade. Convide seus vizinhos, amigos e familiares para participarem dessa ideia e nos ajudarem a deixar Maranguape muito mais limpa, saudável e sustentável para todos.</p>
-    <a class="btn" href="#" onclick="copyEcoBairroLink(this); return false;">Compartilhar o EcoBairro</a>
+    <a class="btn" href="#" onclick="copyEcoBairroLink(); return false;">Compartilhar o EcoBairro</a>
   </div>
 </section>
 
@@ -865,7 +858,7 @@
   <div class="wrap"><b>EcoBairro</b> — feito por moradores de Maranguape, para Maranguape.</div>
 </footer>
 
-<!-- MODAL: Relatar Ponto Crítico -->
+<!-- MODAIS -->
 <div class="modal-overlay" id="modalReport">
   <div class="modal-box">
     <h3>Relatar Ponto Crítico</h3>
@@ -888,7 +881,6 @@
   </div>
 </div>
 
-<!-- MODAL: Ser voluntário -->
 <div class="modal-overlay" id="modalVolunteer">
   <div class="modal-box">
     <h3>Quero ser voluntário</h3>
@@ -910,7 +902,6 @@
   </div>
 </div>
 
-<!-- MODAL: Prolongar prazo -->
 <div class="modal-overlay" id="modalExtend">
   <div class="modal-box">
     <h3>Prolongar prazo</h3>
@@ -928,7 +919,6 @@
   </div>
 </div>
 
-<!-- MODAL: Adicionar voluntário a uma tarefa atrasada -->
 <div class="modal-overlay" id="modalAddHelper">
   <div class="modal-box">
     <h3>Adicionar voluntário</h3>
@@ -950,7 +940,6 @@
   </div>
 </div>
 
-<!-- MODAL: Concluir tarefa -->
 <div class="modal-overlay" id="modalComplete">
   <div class="modal-box">
     <h3>Marcar tarefa como concluída</h3>
@@ -963,7 +952,7 @@
       </div>
       <div class="field">
         <label for="completeText">Mensagem (opcional)</label>
-        <textarea id="completeText" placeholder="Conte como foi a experiência de transformar esse ponto..."></textarea>
+        <textarea id="completeText" placeholder="Conte como foi a experiência..."></textarea>
       </div>
       <div class="modal-actions">
         <button type="submit" class="btn-small" style="background:var(--acid);color:var(--ink);">Publicar conclusão</button>
@@ -974,6 +963,7 @@
 </div>
 
 <script>
+  // Animação de entrada dos elementos
   const revealEls = document.querySelectorAll('.reveal, .root-divider');
   const io = new IntersectionObserver((entries)=>{
     entries.forEach(e=>{
@@ -984,396 +974,333 @@
     });
   }, {threshold:0.2});
   revealEls.forEach(el=>io.observe(el));
-</script>
 
-<script>
+  /* ===================== CONFIGURAÇÃO DO FIREBASE ===================== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyBhdDFtJIeRdsq4hd3gT_R9Vlt_CtQZVQg",
+    authDomain: "eco-bairro-e8723.firebaseapp.com",
+    projectId: "eco-bairro-e8723",
+    storageBucket: "eco-bairro-e8723.firebasestorage.app",
+    messagingSenderId: "320013261013",
+    appId: "1:320013261013:web:979cb7904bb9ec901b2a5c",
+    measurementId: "G-WYHMJDPYNY"
+  };
 
-  
+  // Inicializa o Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-
-
-
-
-  
- /* ===================== CONFIGURAÇÃO DO FIREBASE ===================== */
-  // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBhdDFtJIeRdsq4hd3gT_R9Vlt_CtQZVQg",
-  authDomain: "eco-bairro-e8723.firebaseapp.com",
-  projectId: "eco-bairro-e8723",
-  storageBucket: "eco-bairro-e8723.firebasestorage.app",
-  messagingSenderId: "320013261013",
-  appId: "1:320013261013:web:979cb7904bb9ec901b2a5c",
-  measurementId: "G-WYHMJDPYNY"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
-  /* ===================== PONTOS CRÍTICOS / VOLUNTARIADO ===================== */
+  /* ===================== LÓGICA DO ECOBAIRRO ===================== */
   let reports = [];
   let activeReportId = null;
 
-  // Escuta os relatos em tempo real do Firestore
-  db.collection('reports').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+  // Escuta os relatos no banco em tempo real
+  db.collection("reports").onSnapshot((snapshot) => {
     reports = [];
-    snapshot.forEach(doc => {
+    snapshot.forEach((doc) => {
       reports.push({ id: doc.id, ...doc.data() });
     });
     renderAll();
-  }, error => {
+  }, (error) => {
     console.error("Erro ao carregar dados do Firebase:", error);
   });
 
-  // Converte a imagem para texto (Base64) sem precisar de conta paga no Storage
-  function uploadImage(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
-  }
-
-  function isLate(report){
-    if(!report.volunteers || !report.volunteers.length) return false;
-    const lastDeadline = report.volunteers[report.volunteers.length-1].deadline;
-    return report.status === 'andamento' && lastDeadline < new Date().toISOString().slice(0,10);
-  }
-
-  function fmtDate(iso){
-    if(!iso) return '';
-    const [y,m,d] = iso.split('-');
-    return `${d}/${m}/${y}`;
-  }
-
-  function initials(name){
-    return name.trim().split(/\s+/).slice(0,2).map(w=>w[0].toUpperCase()).join('');
-  }
-
-  function renderReports(){
-    const grid = document.getElementById('reportsGrid');
-    const empty = document.getElementById('reportsEmpty');
-    const openAndProgress = reports.filter(r=>r.status!=='concluido');
-    grid.innerHTML = '';
-    empty.style.display = openAndProgress.length ? 'none' : 'block';
-
-    openAndProgress.forEach(r=>{
-      const late = isLate(r);
-      const statusClass = r.status==='aberto' ? 'aberto' : (late ? 'atrasado' : 'andamento');
-      const statusLabel = r.status==='aberto' ? 'Aberto · precisa de voluntário' : (late ? 'Prazo vencido' : 'Em andamento');
-      const volunteers = r.volunteers || [];
-      const lastDeadline = volunteers.length ? volunteers[volunteers.length-1].deadline : null;
-
-      const card = document.createElement('div');
-      card.className = 'report-card';
-      card.innerHTML = `
-        <img class="report-photo" src="${r.photo}" alt="Foto do ponto crítico relatado">
-        <div class="report-body">
-          <span class="status-badge ${statusClass}">${statusLabel}</span>
-          <div class="report-address">${escapeHtml(r.address)}</div>
-          ${volunteers.length ? `
-            <div class="volunteer-row">
-              <div class="volunteer-avatars">
-                ${volunteers.map(v=>`<span title="${escapeHtml(v.name)}">${initials(v.name)}</span>`).join('')}
-              </div>
-              <span>${volunteers.length>1 ? volunteers.length+' voluntários nessa tarefa' : 'Voluntário: '+escapeHtml(volunteers[0].name)}</span>
-            </div>
-            <div class="deadline-text ${late?'late':''}">Prazo: ${fmtDate(lastDeadline)}${late?' — vencido':''}</div>
-          ` : `<p style="font-size:0.85rem;color:var(--charcoal-soft);">Ainda sem voluntários. Seja o primeiro a ajudar!</p>`}
-          <div class="report-actions">
-            ${r.status==='aberto' ? `<button class="btn-small" onclick="openVolunteerModal('${r.id}')">Quero ser voluntário</button>` : ''}
-            ${r.status==='andamento' && !late ? `<button class="btn-small" onclick="openCompleteModal('${r.id}')">Marcar como concluído</button>` : ''}
-            ${late ? `
-              <button class="btn-small outline-clay" onclick="openExtendModal('${r.id}')">Prolongar prazo</button>
-              <button class="btn-small" onclick="openAddHelperModal('${r.id}')">Adicionar voluntário</button>
-              <button class="btn-small" onclick="openCompleteModal('${r.id}')">Marcar como concluído</button>
-            ` : ''}
-          </div>
-        </div>`;
-      grid.appendChild(card);
-    });
-  }
-
-  function renderDone(){
-    const grid = document.getElementById('doneGrid');
-    const empty = document.getElementById('doneEmpty');
-    const done = reports.filter(r=>r.status==='concluido');
-    grid.innerHTML = '';
-    empty.style.display = done.length ? 'none' : 'block';
-
-    done.forEach(r=>{
-      const volunteers = r.volunteers || [];
-      const names = volunteers.map(v=>v.name).join(' & ') || 'Comunidade';
-      const card = document.createElement('div');
-      card.className = 'done-card';
-      card.innerHTML = `
-        <span class="done-ribbon">Concluído</span>
-        <img src="${(r.completion && r.completion.photo) || r.photo}" alt="Foto do trabalho concluído">
-        <div class="done-body">
-          <div class="who">${escapeHtml(names)} — ${escapeHtml(r.address)}</div>
-          ${r.completion && r.completion.text ? `<p>${escapeHtml(r.completion.text)}</p>` : `<p>Ponto transformado pela comunidade. 🌱</p>`}
-        </div>`;
-      grid.appendChild(card);
-    });
-  }
-
-  function renderAll(){
+  function renderAll() {
     renderReports();
     renderDone();
   }
 
-  function escapeHtml(str){
-    if(!str) return '';
-    const d = document.createElement('div');
-    d.textContent = str;
-    return d.innerHTML;
-  }
+  function renderReports() {
+    const grid = document.getElementById("reportsGrid");
+    const emptyNote = document.getElementById("reportsEmpty");
+    grid.innerHTML = "";
 
-  /* ---------- Modais ---------- */
-  function openModal(id){ document.getElementById(id).classList.add('open'); }
-  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+    const activeReports = reports.filter(r => r.status !== 'concluido');
 
-  function openReportModal(){
-    document.getElementById('formReport').reset();
-    document.getElementById('reportPreview').style.display='none';
-    openModal('modalReport');
-  }
-  function openVolunteerModal(id){
-    activeReportId = id;
-    document.getElementById('formVolunteer').reset();
-    document.getElementById('volDeadline').min = new Date().toISOString().slice(0,10);
-    openModal('modalVolunteer');
-  }
-  function openExtendModal(id){
-    activeReportId = id;
-    document.getElementById('formExtend').reset();
-    document.getElementById('extendDeadline').min = new Date().toISOString().slice(0,10);
-    openModal('modalExtend');
-  }
-  function openAddHelperModal(id){
-    activeReportId = id;
-    document.getElementById('formAddHelper').reset();
-    document.getElementById('helperDeadline').min = new Date().toISOString().slice(0,10);
-    openModal('modalAddHelper');
-  }
-  function openCompleteModal(id){
-    activeReportId = id;
-    document.getElementById('formComplete').reset();
-    document.getElementById('completePreview').style.display='none';
-    openModal('modalComplete');
-  }
-
-  function previewImage(input, previewId){
-    const file = input.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = e=>{
-      const img = document.getElementById(previewId);
-      img.src = e.target.result;
-      img.style.display='block';
-    };
-    reader.readAsDataURL(file);
-  }
-
-  /* ---------- Submissões Assíncronas (Firestore) ---------- */
-  async function submitReport(ev){
-    ev.preventDefault();
-    const btn = ev.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.textContent = 'Enviando...';
-
-    try {
-      const address = document.getElementById('reportAddress').value.trim();
-      const file = document.getElementById('reportPhoto').files[0];
-      if(!address || !file) return;
-
-      // Converte imagem para Base64
-      const photoUrl = await uploadImage(file);
-
-      await db.collection('reports').add({
-        address,
-        photo: photoUrl,
-        status: 'aberto',
-        volunteers: [],
-        completion: null,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      closeModal('modalReport');
-    } catch(err) {
-      alert('Erro ao enviar relato: ' + err.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Relatar ponto';
+    if (activeReports.length === 0) {
+      emptyNote.style.display = "block";
+      return;
     }
-  }
+    emptyNote.style.display = "none";
 
-  async function submitVolunteer(ev){
-    ev.preventDefault();
-    const btn = ev.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
+    const today = new Date().toISOString().split('T')[0];
 
-    try {
-      const name = document.getElementById('volName').value.trim();
-      const deadline = document.getElementById('volDeadline').value;
-      if(!name || !deadline || !activeReportId) return;
+    activeReports.forEach(r => {
+      let isLate = r.deadline && r.deadline < today;
+      let statusClass = "aberto";
+      let statusText = "Aberto";
 
-      const r = reports.find(x=>x.id===activeReportId);
-      if(!r) return;
-
-      const updatedVolunteers = [...(r.volunteers || []), {name, deadline}];
-
-      await db.collection('reports').doc(activeReportId).update({
-        volunteers: updatedVolunteers,
-        status: 'andamento'
-      });
-
-      closeModal('modalVolunteer');
-    } catch(err) {
-      alert('Erro ao salvar voluntário: ' + err.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Confirmar voluntariado';
-    }
-  }
-
-  async function submitExtend(ev){
-    ev.preventDefault();
-    const btn = ev.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-
-    try {
-      const deadline = document.getElementById('extendDeadline').value;
-      if(!deadline || !activeReportId) return;
-
-      const r = reports.find(x=>x.id===activeReportId);
-      if(!r || !r.volunteers || !r.volunteers.length) return;
-
-      const updatedVolunteers = [...r.volunteers];
-      updatedVolunteers[updatedVolunteers.length-1].deadline = deadline;
-
-      await db.collection('reports').doc(activeReportId).update({
-        volunteers: updatedVolunteers
-      });
-
-      closeModal('modalExtend');
-    } catch(err) {
-      alert('Erro ao atualizar prazo: ' + err.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Salvar novo prazo';
-    }
-  }
-
-  async function submitAddHelper(ev){
-    ev.preventDefault();
-    const btn = ev.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-
-    try {
-      const name = document.getElementById('helperName').value.trim();
-      const deadline = document.getElementById('helperDeadline').value;
-      if(!name || !deadline || !activeReportId) return;
-
-      const r = reports.find(x=>x.id===activeReportId);
-      if(!r) return;
-
-      const updatedVolunteers = [...(r.volunteers || []), {name, deadline}];
-
-      await db.collection('reports').doc(activeReportId).update({
-        volunteers: updatedVolunteers
-      });
-
-      closeModal('modalAddHelper');
-    } catch(err) {
-      alert('Erro ao adicionar voluntário: ' + err.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Adicionar à tarefa';
-    }
-  }
-
-  async function submitComplete(ev){
-    ev.preventDefault();
-    const btn = ev.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.textContent = 'Enviando...';
-
-    try {
-      const file = document.getElementById('completePhoto').files[0];
-      const text = document.getElementById('completeText').value.trim();
-      if(!file || !activeReportId) return;
-
-      // Converte imagem para Base64
-      const photoUrl = await uploadImage(file);
-
-      await db.collection('reports').doc(activeReportId).update({
-        status: 'concluido',
-        completion: { photo: photoUrl, text }
-      });
-
-      closeModal('modalComplete');
-      document.getElementById('concluidos').scrollIntoView({behavior:'smooth'});
-    } catch(err) {
-      alert('Erro ao concluir tarefa: ' + err.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Publicar conclusão';
-    }
-  }
-
-  // Fecha modal clicando fora da caixa
-  document.querySelectorAll('.modal-overlay').forEach(ov=>{
-    ov.addEventListener('click', e=>{
-      if(e.target === ov) ov.classList.remove('open');
-    });
-  });
-
-  /* ---------- Compartilhar EcoBairro (copiar link) ---------- */
-  function copyEcoBairroLink(){
-    const url = location.href;
-    const showToast = ()=>{
-      let toast = document.getElementById('copyToast');
-      if(!toast){
-        toast = document.createElement('div');
-        toast.id = 'copyToast';
-        toast.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);background:#8DC63F;color:#12140F;font-family:Inter,sans-serif;font-weight:600;font-size:0.9rem;padding:12px 22px;border-radius:999px;box-shadow:0 10px 24px rgba(0,0,0,0.25);z-index:999;opacity:0;transition:opacity .25s ease, transform .25s ease;';
-        document.body.appendChild(toast);
+      if (r.status === "andamento") {
+        if (isLate) {
+          statusClass = "atrasado";
+          statusText = "Atrasado";
+        } else {
+          statusClass = "andamento";
+          statusText = "Em Andamento";
+        }
       }
-      toast.textContent = 'Link copiado com sucesso!';
-      requestAnimationFrame(()=>{
-        toast.style.opacity = '1';
-        toast.style.transform = 'translateX(-50%) translateY(0)';
-      });
-      clearTimeout(toast._hideTimer);
-      toast._hideTimer = setTimeout(()=>{
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(-50%) translateY(20px)';
-      }, 2400);
-    };
 
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(url).then(showToast).catch(()=>{
-        prompt('Copie o link do EcoBairro:', url);
-      });
-    }else{
-      const temp = document.createElement('input');
-      temp.value = url;
-      document.body.appendChild(temp);
-      temp.select();
-      try{ document.execCommand('copy'); showToast(); }
-      catch(e){ prompt('Copie o link do EcoBairro:', url); }
-      document.body.removeChild(temp);
+      const card = document.createElement("div");
+      card.className = "report-card";
+
+      let volunteersHTML = "";
+      if (r.volunteers && r.volunteers.length > 0) {
+        volunteersHTML = `
+          <div class="volunteer-row">
+            <div class="volunteer-avatars">
+              ${r.volunteers.map(v => `<span>${v.charAt(0).toUpperCase()}</span>`).join('')}
+            </div>
+            <span>${r.volunteers.join(', ')}</span>
+          </div>
+        `;
+      }
+
+      let deadlineHTML = "";
+      if (r.deadline) {
+        deadlineHTML = `<div class="deadline-text ${isLate ? 'late' : ''}">Prazo: ${formatDate(r.deadline)} ${isLate ? '(Vencido)' : ''}</div>`;
+      }
+
+      let actionsHTML = "";
+      if (r.status === "aberto") {
+        actionsHTML = `<button class="btn-small" onclick="openVolunteerModal('${r.id}')">Quero ser voluntário</button>`;
+      } else if (r.status === "andamento") {
+        if (isLate) {
+          actionsHTML = `
+            <button class="btn-small outline-clay" onclick="openExtendModal('${r.id}')">Prolongar prazo</button>
+            <button class="btn-small ghost" onclick="openAddHelperModal('${r.id}')">+ Voluntário</button>
+            <button class="btn-small" onclick="openCompleteModal('${r.id}')">Marcar Concluído</button>
+          `;
+        } else {
+          actionsHTML = `
+            <button class="btn-small ghost" onclick="openAddHelperModal('${r.id}')">+ Voluntário</button>
+            <button class="btn-small" onclick="openCompleteModal('${r.id}')">Marcar Concluído</button>
+          `;
+        }
+      }
+
+      card.innerHTML = `
+        <img src="${r.photo}" alt="Ponto crítico" class="report-photo">
+        <div class="report-body">
+          <span class="status-badge ${statusClass}">${statusText}</span>
+          <div class="report-address">${r.address}</div>
+          ${volunteersHTML}
+          ${deadlineHTML}
+          <div class="report-actions">${actionsHTML}</div>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function renderDone() {
+    const grid = document.getElementById("doneGrid");
+    const emptyNote = document.getElementById("doneEmpty");
+    grid.innerHTML = "";
+
+    const completedReports = reports.filter(r => r.status === 'concluido');
+
+    if (completedReports.length === 0) {
+      emptyNote.style.display = "block";
+      return;
     }
+    emptyNote.style.display = "none";
+
+    completedReports.forEach(r => {
+      const card = document.createElement("div");
+      card.className = "done-card";
+      const volunteersStr = r.volunteers ? r.volunteers.join(', ') : 'Comunidade';
+      
+      card.innerHTML = `
+        <div class="done-ribbon">Limpeza Concluída</div>
+        <img src="${r.completePhoto || r.photo}" alt="Local limpo">
+        <div class="done-body">
+          <div class="who">Transformado por: ${volunteersStr}</div>
+          <p><strong>${r.address}</strong></p>
+          ${r.completeText ? `<p style="margin-top:6px;font-style:italic;">"${r.completeText}"</p>` : ''}
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  /* ===================== FUNÇÕES DE ABRIR/FECHAR MODAL ===================== */
+  function openReportModal() { document.getElementById('modalReport').classList.add('open'); }
+  function openVolunteerModal(id) { activeReportId = id; document.getElementById('modalVolunteer').classList.add('open'); }
+  function openExtendModal(id) { activeReportId = id; document.getElementById('modalExtend').classList.add('open'); }
+  function openAddHelperModal(id) { activeReportId = id; document.getElementById('modalAddHelper').classList.add('open'); }
+  function openCompleteModal(id) { activeReportId = id; document.getElementById('modalComplete').classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  /* ===================== COMPRESSÃO DE IMAGEM ===================== */
+  function processImageFile(fileInput) {
+    return new Promise((resolve, reject) => {
+      const file = fileInput.files[0];
+      if (!file) return resolve(null);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const max = 600;
+          if (width > height && width > max) {
+            height = Math.round((height * max) / width);
+            width = max;
+          } else if (height > max) {
+            width = Math.round((width * max) / height);
+            height = max;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function previewImage(input, previewId) {
+    const preview = document.getElementById(previewId);
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  /* ===================== ENVIOS PARA O FIREBASE ===================== */
+  async function submitReport(e) {
+    e.preventDefault();
+    const address = document.getElementById('reportAddress').value;
+    const fileInput = document.getElementById('reportPhoto');
+    const photoBase64 = await processImageFile(fileInput);
+
+    if (!photoBase64) {
+      alert("Por favor, selecione uma foto!");
+      return;
+    }
+
+    try {
+      await db.collection("reports").add({
+        address: address,
+        photo: photoBase64,
+        status: "aberto",
+        volunteers: [],
+        deadline: "",
+        createdAt: new Date().toISOString()
+      });
+      document.getElementById('formReport').reset();
+      document.getElementById('reportPreview').style.display = 'none';
+      closeModal('modalReport');
+    } catch (err) {
+      alert("Erro ao salvar o relato. Tente novamente.");
+      console.error(err);
+    }
+  }
+
+  async function submitVolunteer(e) {
+    e.preventDefault();
+    const name = document.getElementById('volName').value;
+    const deadline = document.getElementById('volDeadline').value;
+
+    try {
+      await db.collection("reports").doc(activeReportId).update({
+        status: "andamento",
+        volunteers: [name],
+        deadline: deadline
+      });
+      document.getElementById('formVolunteer').reset();
+      closeModal('modalVolunteer');
+    } catch (err) {
+      alert("Erro ao atualizar o voluntariado.");
+      console.error(err);
+    }
+  }
+
+  async function submitExtend(e) {
+    e.preventDefault();
+    const newDeadline = document.getElementById('extendDeadline').value;
+
+    try {
+      await db.collection("reports").doc(activeReportId).update({
+        deadline: newDeadline
+      });
+      document.getElementById('formExtend').reset();
+      closeModal('modalExtend');
+    } catch (err) {
+      alert("Erro ao salvar novo prazo.");
+      console.error(err);
+    }
+  }
+
+  async function submitAddHelper(e) {
+    e.preventDefault();
+    const name = document.getElementById('helperName').value;
+    const deadline = document.getElementById('helperDeadline').value;
+
+    const report = reports.find(r => r.id === activeReportId);
+    const updatedVolunteers = report.volunteers ? [...report.volunteers, name] : [name];
+
+    try {
+      await db.collection("reports").doc(activeReportId).update({
+        volunteers: updatedVolunteers,
+        deadline: deadline
+      });
+      document.getElementById('formAddHelper').reset();
+      closeModal('modalAddHelper');
+    } catch (err) {
+      alert("Erro ao adicionar voluntário.");
+      console.error(err);
+    }
+  }
+
+  async function submitComplete(e) {
+    e.preventDefault();
+    const fileInput = document.getElementById('completePhoto');
+    const completeText = document.getElementById('completeText').value;
+    const photoBase64 = await processImageFile(fileInput);
+
+    if (!photoBase64) {
+      alert("Por favor, selecione uma foto do resultado!");
+      return;
+    }
+
+    try {
+      await db.collection("reports").doc(activeReportId).update({
+        status: "concluido",
+        completePhoto: photoBase64,
+        completeText: completeText,
+        completedAt: new Date().toISOString()
+      });
+      document.getElementById('formComplete').reset();
+      document.getElementById('completePreview').style.display = 'none';
+      closeModal('modalComplete');
+    } catch (err) {
+      alert("Erro ao concluir a tarefa.");
+      console.error(err);
+    }
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    const parts = dateStr.split('-');
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  function copyEcoBairroLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      alert("Link do EcoBairro copiado para a sua área de transferência!");
+    }).catch(() => {
+      alert("O link do site é: " + window.location.href);
+    });
   }
 </script>
 </body>
