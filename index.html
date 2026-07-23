@@ -988,6 +988,14 @@
 
 <script>
 
+  
+
+
+
+
+
+  
+ /* ===================== CONFIGURAÇÃO DO FIREBASE ===================== */
   // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
@@ -1009,26 +1017,6 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
-
-
-
-
-
-  
- /* ===================== CONFIGURAÇÃO DO FIREBASE ===================== */
-  // Cole aqui o firebaseConfig que você copiou do painel:
-  const firebaseConfig = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_PROJETO.firebaseapp.com",
-    projectId: "SEU_PROJETO",
-    storageBucket: "SEU_PROJETO.appspot.com",
-    messagingSenderId: "SEU_SENDER_ID",
-    appId: "SEU_APP_ID"
-  };
-
-  // Inicializa o Firebase (Apenas o Firestore é necessário agora)
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
 
   /* ===================== PONTOS CRÍTICOS / VOLUNTARIADO ===================== */
   let reports = [];
