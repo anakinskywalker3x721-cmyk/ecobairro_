@@ -285,6 +285,7 @@
   .btn{
     display:inline-flex;
     align-items:center;
+    justify-content:center;
     gap:8px;
     padding:13px 28px;
     border-radius:999px;
@@ -295,6 +296,7 @@
     background:transparent;
     cursor:pointer;
     transition:background .2s ease, color .2s ease, transform .2s ease;
+    font-family:'Inter',sans-serif;
   }
   .btn:hover{
     background:var(--acid);
@@ -310,7 +312,7 @@
   }
   .btn-center{
     display:flex;
-    justify-content:center;
+    justify-content:flex-start;
     margin-top:34px;
   }
 
@@ -484,6 +486,7 @@
     background:transparent;
     cursor:pointer;
     transition:background .2s ease, color .2s ease;
+    font-family:'Inter',sans-serif;
   }
   .btn-small:hover{background:var(--acid);color:var(--ink);}
   .btn-small.outline-clay{border-color:var(--clay);color:var(--clay);}
@@ -561,7 +564,7 @@
     padding:20px;
     z-index:200;
   }
-  .modal-overlay.open{display:flex;}
+  .modal-overlay.open{display:flex !important;}
   .modal-box{
     background:#fff;
     border-radius:18px;
@@ -797,8 +800,8 @@
         <h2 style="font-size:1.5rem;">Como você pode <span>ajudar?</span></h2>
         <p class="lead" style="margin-top:14px;">Se você identificou um ponto crítico em seu bairro — como acúmulo de lixo na calçada, terrenos baldios com entulho ou descarte irregular de móveis e eletrônicos —, nos informe!</p>
         <p class="lead" style="margin-top:14px;">Use o botão abaixo para relatar o local e nos ajudar a mapear as áreas que precisam de atenção e conscientização urgente.</p>
-        <div class="btn-center" style="justify-content:flex-start;">
-          <a class="btn solid" href="#" onclick="openReportModal();return false;">Relatar Ponto Crítico</a>
+        <div class="btn-center">
+          <button type="button" class="btn solid" onclick="openReportModal()">Relatar Ponto Crítico</button>
         </div>
       </div>
     </div>
@@ -850,7 +853,7 @@
     <span class="eyebrow" style="justify-content:center;">Junte-se ao movimento</span>
     <h2>Gostou do projeto? Se você quer cuidar do seu bairro, da nossa cidade e do planeta, junte-se a nós!</h2>
     <p>Pequenas atitudes diárias transformam a nossa realidade. Convide seus vizinhos, amigos e familiares para participarem dessa ideia e nos ajudarem a deixar Maranguape muito mais limpa, saudável e sustentável para todos.</p>
-    <a class="btn" href="#" onclick="copyEcoBairroLink(); return false;">Compartilhar o EcoBairro</a>
+    <button type="button" class="btn" onclick="copyEcoBairroLink()">Compartilhar o EcoBairro</button>
   </div>
 </section>
 
@@ -963,17 +966,46 @@
 </div>
 
 <script>
-  // Animação de entrada dos elementos
-  const revealEls = document.querySelectorAll('.reveal, .root-divider');
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach(e=>{
-      if(e.isIntersecting){
-        e.target.classList.add('in-view');
-        io.unobserve(e.target);
-      }
-    });
-  }, {threshold:0.2});
-  revealEls.forEach(el=>io.observe(el));
+  /* ===================== CONTROLE DOS MODAIS (PRIMEIRA PRIORIDADE) ===================== */
+  let reports = [];
+  let activeReportId = null;
+
+  function openReportModal() { 
+    document.getElementById('modalReport').classList.add('open'); 
+  }
+  function openVolunteerModal(id) { 
+    activeReportId = id; 
+    document.getElementById('modalVolunteer').classList.add('open'); 
+  }
+  function openExtendModal(id) { 
+    activeReportId = id; 
+    document.getElementById('modalExtend').classList.add('open'); 
+  }
+  function openAddHelperModal(id) { 
+    activeReportId = id; 
+    document.getElementById('modalAddHelper').classList.add('open'); 
+  }
+  function openCompleteModal(id) { 
+    activeReportId = id; 
+    document.getElementById('modalComplete').classList.add('open'); 
+  }
+  function closeModal(id) { 
+    document.getElementById(id).classList.remove('open'); 
+  }
+
+  // Animação de rolagem suave e entrada dos elementos
+  document.addEventListener("DOMContentLoaded", () => {
+    const revealEls = document.querySelectorAll('.reveal, .root-divider');
+    const io = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){
+          e.target.classList.add('in-view');
+          io.unobserve(e.target);
+        }
+      });
+    }, {threshold:0.15});
+    revealEls.forEach(el=>io.observe(el));
+  });
 
   /* ===================== CONFIGURAÇÃO DO FIREBASE ===================== */
   const firebaseConfig = {
@@ -986,24 +1018,24 @@
     measurementId: "G-WYHMJDPYNY"
   };
 
-  // Inicializa o Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+  let db = null;
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
 
-  /* ===================== LÓGICA DO ECOBAIRRO ===================== */
-  let reports = [];
-  let activeReportId = null;
-
-  // Escuta os relatos no banco em tempo real
-  db.collection("reports").onSnapshot((snapshot) => {
-    reports = [];
-    snapshot.forEach((doc) => {
-      reports.push({ id: doc.id, ...doc.data() });
+    // Escuta relatos em tempo real
+    db.collection("reports").onSnapshot((snapshot) => {
+      reports = [];
+      snapshot.forEach((doc) => {
+        reports.push({ id: doc.id, ...doc.data() });
+      });
+      renderAll();
+    }, (error) => {
+      console.error("Erro ao carregar dados do Firebase:", error);
     });
-    renderAll();
-  }, (error) => {
-    console.error("Erro ao carregar dados do Firebase:", error);
-  });
+  } catch (e) {
+    console.error("Erro ao inicializar Firebase:", e);
+  }
 
   function renderAll() {
     renderReports();
@@ -1013,15 +1045,17 @@
   function renderReports() {
     const grid = document.getElementById("reportsGrid");
     const emptyNote = document.getElementById("reportsEmpty");
+    if (!grid) return;
+    
     grid.innerHTML = "";
 
     const activeReports = reports.filter(r => r.status !== 'concluido');
 
     if (activeReports.length === 0) {
-      emptyNote.style.display = "block";
+      if(emptyNote) emptyNote.style.display = "block";
       return;
     }
-    emptyNote.style.display = "none";
+    if(emptyNote) emptyNote.style.display = "none";
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -1062,18 +1096,18 @@
 
       let actionsHTML = "";
       if (r.status === "aberto") {
-        actionsHTML = `<button class="btn-small" onclick="openVolunteerModal('${r.id}')">Quero ser voluntário</button>`;
+        actionsHTML = `<button type="button" class="btn-small" onclick="openVolunteerModal('${r.id}')">Quero ser voluntário</button>`;
       } else if (r.status === "andamento") {
         if (isLate) {
           actionsHTML = `
-            <button class="btn-small outline-clay" onclick="openExtendModal('${r.id}')">Prolongar prazo</button>
-            <button class="btn-small ghost" onclick="openAddHelperModal('${r.id}')">+ Voluntário</button>
-            <button class="btn-small" onclick="openCompleteModal('${r.id}')">Marcar Concluído</button>
+            <button type="button" class="btn-small outline-clay" onclick="openExtendModal('${r.id}')">Prolongar prazo</button>
+            <button type="button" class="btn-small ghost" onclick="openAddHelperModal('${r.id}')">+ Voluntário</button>
+            <button type="button" class="btn-small" onclick="openCompleteModal('${r.id}')">Marcar Concluído</button>
           `;
         } else {
           actionsHTML = `
-            <button class="btn-small ghost" onclick="openAddHelperModal('${r.id}')">+ Voluntário</button>
-            <button class="btn-small" onclick="openCompleteModal('${r.id}')">Marcar Concluído</button>
+            <button type="button" class="btn-small ghost" onclick="openAddHelperModal('${r.id}')">+ Voluntário</button>
+            <button type="button" class="btn-small" onclick="openCompleteModal('${r.id}')">Marcar Concluído</button>
           `;
         }
       }
@@ -1095,15 +1129,17 @@
   function renderDone() {
     const grid = document.getElementById("doneGrid");
     const emptyNote = document.getElementById("doneEmpty");
+    if(!grid) return;
+
     grid.innerHTML = "";
 
     const completedReports = reports.filter(r => r.status === 'concluido');
 
     if (completedReports.length === 0) {
-      emptyNote.style.display = "block";
+      if(emptyNote) emptyNote.style.display = "block";
       return;
     }
-    emptyNote.style.display = "none";
+    if(emptyNote) emptyNote.style.display = "none";
 
     completedReports.forEach(r => {
       const card = document.createElement("div");
@@ -1122,14 +1158,6 @@
       grid.appendChild(card);
     });
   }
-
-  /* ===================== FUNÇÕES DE ABRIR/FECHAR MODAL ===================== */
-  function openReportModal() { document.getElementById('modalReport').classList.add('open'); }
-  function openVolunteerModal(id) { activeReportId = id; document.getElementById('modalVolunteer').classList.add('open'); }
-  function openExtendModal(id) { activeReportId = id; document.getElementById('modalExtend').classList.add('open'); }
-  function openAddHelperModal(id) { activeReportId = id; document.getElementById('modalAddHelper').classList.add('open'); }
-  function openCompleteModal(id) { activeReportId = id; document.getElementById('modalComplete').classList.add('open'); }
-  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
   /* ===================== COMPRESSÃO DE IMAGEM ===================== */
   function processImageFile(fileInput) {
@@ -1179,6 +1207,8 @@
   /* ===================== ENVIOS PARA O FIREBASE ===================== */
   async function submitReport(e) {
     e.preventDefault();
+    if (!db) { alert("Conexão com o banco falhou. Tente atualizar a página."); return; }
+
     const address = document.getElementById('reportAddress').value;
     const fileInput = document.getElementById('reportPhoto');
     const photoBase64 = await processImageFile(fileInput);
@@ -1208,6 +1238,7 @@
 
   async function submitVolunteer(e) {
     e.preventDefault();
+    if (!db) return;
     const name = document.getElementById('volName').value;
     const deadline = document.getElementById('volDeadline').value;
 
@@ -1227,6 +1258,7 @@
 
   async function submitExtend(e) {
     e.preventDefault();
+    if (!db) return;
     const newDeadline = document.getElementById('extendDeadline').value;
 
     try {
@@ -1243,6 +1275,7 @@
 
   async function submitAddHelper(e) {
     e.preventDefault();
+    if (!db) return;
     const name = document.getElementById('helperName').value;
     const deadline = document.getElementById('helperDeadline').value;
 
@@ -1264,6 +1297,7 @@
 
   async function submitComplete(e) {
     e.preventDefault();
+    if (!db) return;
     const fileInput = document.getElementById('completePhoto');
     const completeText = document.getElementById('completeText').value;
     const photoBase64 = await processImageFile(fileInput);
