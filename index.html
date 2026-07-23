@@ -1015,62 +1015,54 @@ const analytics = getAnalytics(app);
 
 
   
+ /* ===================== CONFIGURAÇÃO DO FIREBASE ===================== */
+  // Cole aqui o firebaseConfig que você copiou do painel:
+  const firebaseConfig = {
+    apiKey: "SUA_API_KEY",
+    authDomain: "SEU_PROJETO.firebaseapp.com",
+    projectId: "SEU_PROJETO",
+    storageBucket: "SEU_PROJETO.appspot.com",
+    messagingSenderId: "SEU_SENDER_ID",
+    appId: "SEU_APP_ID"
+  };
+
+  // Inicializa o Firebase (Apenas o Firestore é necessário agora)
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
   /* ===================== PONTOS CRÍTICOS / VOLUNTARIADO ===================== */
-  const STORAGE_KEY = 'ecobairro_reports_v1';
-  let activeReportId = null; // relato sendo manipulado pelo modal em uso
+  let reports = [];
+  let activeReportId = null;
 
-  function loadReports(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(raw) return JSON.parse(raw);
-    }catch(e){ /* ignora e recria */ }
-    // dados de amostra, para mostrar como o projeto funciona em andamento
-    return [
-      {
-        id:'seed-1',
-        address:'Rua das Palmeiras, 245 — Centro',
-        photo:'data:image/svg+xml;utf8,' + encodeURIComponent(samplePhotoSVG('#213A1B','Acúmulo de entulho')),
-        status:'andamento',
-        volunteers:[{name:'Marcos Vinícius', deadline: addDays(4)}],
-        completion:null
-      },
-      {
-        id:'seed-2',
-        address:'Av. Beira Rio, 980 — São Francisco',
-        photo:'data:image/svg+xml;utf8,' + encodeURIComponent(samplePhotoSVG('#2b3a1f','Lixo em terreno baldio')),
-        status:'concluido',
-        volunteers:[{name:'Ana Beatriz', deadline: addDays(-2)}],
-        completion:{
-          photo:'data:image/svg+xml;utf8,' + encodeURIComponent(samplePhotoSVG('#8DC63F','Depois: rua limpa')),
-          text:'Levamos duas tardes de sábado com mais três vizinhos. Hoje a rua está limpa e já colocamos uma lixeira comunitária no local!'
-        }
-      }
-    ];
+  // Escuta os relatos em tempo real do Firestore
+  db.collection('reports').orderBy('createdAt', 'desc').onSnapshot(snapshot => {
+    reports = [];
+    snapshot.forEach(doc => {
+      reports.push({ id: doc.id, ...doc.data() });
+    });
+    renderAll();
+  }, error => {
+    console.error("Erro ao carregar dados do Firebase:", error);
+  });
+
+  // Converte a imagem para texto (Base64) sem precisar de conta paga no Storage
+  function uploadImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
   }
-
-  function samplePhotoSVG(bg,label){
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="${bg}"/><text x="200" y="155" fill="#ffffff" font-family="sans-serif" font-size="16" text-anchor="middle" opacity="0.75">${label}</text></svg>`;
-  }
-
-  function addDays(n){
-    const d = new Date();
-    d.setDate(d.getDate()+n);
-    return d.toISOString().slice(0,10);
-  }
-
-  function saveReports(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
-  }
-
-  let reports = loadReports();
 
   function isLate(report){
-    if(!report.volunteers.length) return false;
+    if(!report.volunteers || !report.volunteers.length) return false;
     const lastDeadline = report.volunteers[report.volunteers.length-1].deadline;
     return report.status === 'andamento' && lastDeadline < new Date().toISOString().slice(0,10);
   }
 
   function fmtDate(iso){
+    if(!iso) return '';
     const [y,m,d] = iso.split('-');
     return `${d}/${m}/${y}`;
   }
@@ -1090,7 +1082,8 @@ const analytics = getAnalytics(app);
       const late = isLate(r);
       const statusClass = r.status==='aberto' ? 'aberto' : (late ? 'atrasado' : 'andamento');
       const statusLabel = r.status==='aberto' ? 'Aberto · precisa de voluntário' : (late ? 'Prazo vencido' : 'Em andamento');
-      const lastDeadline = r.volunteers.length ? r.volunteers[r.volunteers.length-1].deadline : null;
+      const volunteers = r.volunteers || [];
+      const lastDeadline = volunteers.length ? volunteers[volunteers.length-1].deadline : null;
 
       const card = document.createElement('div');
       card.className = 'report-card';
@@ -1099,12 +1092,12 @@ const analytics = getAnalytics(app);
         <div class="report-body">
           <span class="status-badge ${statusClass}">${statusLabel}</span>
           <div class="report-address">${escapeHtml(r.address)}</div>
-          ${r.volunteers.length ? `
+          ${volunteers.length ? `
             <div class="volunteer-row">
               <div class="volunteer-avatars">
-                ${r.volunteers.map(v=>`<span title="${escapeHtml(v.name)}">${initials(v.name)}</span>`).join('')}
+                ${volunteers.map(v=>`<span title="${escapeHtml(v.name)}">${initials(v.name)}</span>`).join('')}
               </div>
-              <span>${r.volunteers.length>1 ? r.volunteers.length+' voluntários nessa tarefa' : 'Voluntário: '+escapeHtml(r.volunteers[0].name)}</span>
+              <span>${volunteers.length>1 ? volunteers.length+' voluntários nessa tarefa' : 'Voluntário: '+escapeHtml(volunteers[0].name)}</span>
             </div>
             <div class="deadline-text ${late?'late':''}">Prazo: ${fmtDate(lastDeadline)}${late?' — vencido':''}</div>
           ` : `<p style="font-size:0.85rem;color:var(--charcoal-soft);">Ainda sem voluntários. Seja o primeiro a ajudar!</p>`}
@@ -1130,7 +1123,8 @@ const analytics = getAnalytics(app);
     empty.style.display = done.length ? 'none' : 'block';
 
     done.forEach(r=>{
-      const names = r.volunteers.map(v=>v.name).join(' & ');
+      const volunteers = r.volunteers || [];
+      const names = volunteers.map(v=>v.name).join(' & ') || 'Comunidade';
       const card = document.createElement('div');
       card.className = 'done-card';
       card.innerHTML = `
@@ -1150,6 +1144,7 @@ const analytics = getAnalytics(app);
   }
 
   function escapeHtml(str){
+    if(!str) return '';
     const d = document.createElement('div');
     d.textContent = str;
     return d.innerHTML;
@@ -1201,103 +1196,163 @@ const analytics = getAnalytics(app);
     reader.readAsDataURL(file);
   }
 
-  /* ---------- Submissões ---------- */
-  function submitReport(ev){
+  /* ---------- Submissões Assíncronas (Firestore) ---------- */
+  async function submitReport(ev){
     ev.preventDefault();
-    const address = document.getElementById('reportAddress').value.trim();
-    const fileInput = document.getElementById('reportPhoto');
-    const file = fileInput.files[0];
-    if(!address || !file) return;
+    const btn = ev.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
 
-    const reader = new FileReader();
-    reader.onload = e=>{
-      reports.unshift({
-        id: 'r-' + Date.now(),
+    try {
+      const address = document.getElementById('reportAddress').value.trim();
+      const file = document.getElementById('reportPhoto').files[0];
+      if(!address || !file) return;
+
+      // Converte imagem para Base64
+      const photoUrl = await uploadImage(file);
+
+      await db.collection('reports').add({
         address,
-        photo: e.target.result,
-        status:'aberto',
-        volunteers:[],
-        completion:null
+        photo: photoUrl,
+        status: 'aberto',
+        volunteers: [],
+        completion: null,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-      saveReports();
-      renderAll();
+
       closeModal('modalReport');
-    };
-    reader.readAsDataURL(file);
+    } catch(err) {
+      alert('Erro ao enviar relato: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Relatar ponto';
+    }
   }
 
-  function submitVolunteer(ev){
+  async function submitVolunteer(ev){
     ev.preventDefault();
-    const name = document.getElementById('volName').value.trim();
-    const deadline = document.getElementById('volDeadline').value;
-    if(!name || !deadline || !activeReportId) return;
-    const r = reports.find(x=>x.id===activeReportId);
-    if(!r) return;
-    r.volunteers.push({name, deadline});
-    r.status = 'andamento';
-    saveReports();
-    renderAll();
-    closeModal('modalVolunteer');
+    const btn = ev.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+
+    try {
+      const name = document.getElementById('volName').value.trim();
+      const deadline = document.getElementById('volDeadline').value;
+      if(!name || !deadline || !activeReportId) return;
+
+      const r = reports.find(x=>x.id===activeReportId);
+      if(!r) return;
+
+      const updatedVolunteers = [...(r.volunteers || []), {name, deadline}];
+
+      await db.collection('reports').doc(activeReportId).update({
+        volunteers: updatedVolunteers,
+        status: 'andamento'
+      });
+
+      closeModal('modalVolunteer');
+    } catch(err) {
+      alert('Erro ao salvar voluntário: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Confirmar voluntariado';
+    }
   }
 
-  function submitExtend(ev){
+  async function submitExtend(ev){
     ev.preventDefault();
-    const deadline = document.getElementById('extendDeadline').value;
-    if(!deadline || !activeReportId) return;
-    const r = reports.find(x=>x.id===activeReportId);
-    if(!r || !r.volunteers.length) return;
-    r.volunteers[r.volunteers.length-1].deadline = deadline;
-    saveReports();
-    renderAll();
-    closeModal('modalExtend');
+    const btn = ev.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+
+    try {
+      const deadline = document.getElementById('extendDeadline').value;
+      if(!deadline || !activeReportId) return;
+
+      const r = reports.find(x=>x.id===activeReportId);
+      if(!r || !r.volunteers || !r.volunteers.length) return;
+
+      const updatedVolunteers = [...r.volunteers];
+      updatedVolunteers[updatedVolunteers.length-1].deadline = deadline;
+
+      await db.collection('reports').doc(activeReportId).update({
+        volunteers: updatedVolunteers
+      });
+
+      closeModal('modalExtend');
+    } catch(err) {
+      alert('Erro ao atualizar prazo: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Salvar novo prazo';
+    }
   }
 
-  function submitAddHelper(ev){
+  async function submitAddHelper(ev){
     ev.preventDefault();
-    const name = document.getElementById('helperName').value.trim();
-    const deadline = document.getElementById('helperDeadline').value;
-    if(!name || !deadline || !activeReportId) return;
-    const r = reports.find(x=>x.id===activeReportId);
-    if(!r) return;
-    r.volunteers.push({name, deadline});
-    saveReports();
-    renderAll();
-    closeModal('modalAddHelper');
+    const btn = ev.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+
+    try {
+      const name = document.getElementById('helperName').value.trim();
+      const deadline = document.getElementById('helperDeadline').value;
+      if(!name || !deadline || !activeReportId) return;
+
+      const r = reports.find(x=>x.id===activeReportId);
+      if(!r) return;
+
+      const updatedVolunteers = [...(r.volunteers || []), {name, deadline}];
+
+      await db.collection('reports').doc(activeReportId).update({
+        volunteers: updatedVolunteers
+      });
+
+      closeModal('modalAddHelper');
+    } catch(err) {
+      alert('Erro ao adicionar voluntário: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Adicionar à tarefa';
+    }
   }
 
-  function submitComplete(ev){
+  async function submitComplete(ev){
     ev.preventDefault();
-    const fileInput = document.getElementById('completePhoto');
-    const file = fileInput.files[0];
-    const text = document.getElementById('completeText').value.trim();
-    if(!file || !activeReportId) return;
-    const r = reports.find(x=>x.id===activeReportId);
-    if(!r) return;
+    const btn = ev.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
 
-    const reader = new FileReader();
-    reader.onload = e=>{
-      r.status = 'concluido';
-      r.completion = { photo: e.target.result, text };
-      saveReports();
-      renderAll();
+    try {
+      const file = document.getElementById('completePhoto').files[0];
+      const text = document.getElementById('completeText').value.trim();
+      if(!file || !activeReportId) return;
+
+      // Converte imagem para Base64
+      const photoUrl = await uploadImage(file);
+
+      await db.collection('reports').doc(activeReportId).update({
+        status: 'concluido',
+        completion: { photo: photoUrl, text }
+      });
+
       closeModal('modalComplete');
       document.getElementById('concluidos').scrollIntoView({behavior:'smooth'});
-    };
-    reader.readAsDataURL(file);
+    } catch(err) {
+      alert('Erro ao concluir tarefa: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Publicar conclusão';
+    }
   }
 
-  // fecha modal clicando fora da caixa
+  // Fecha modal clicando fora da caixa
   document.querySelectorAll('.modal-overlay').forEach(ov=>{
     ov.addEventListener('click', e=>{
       if(e.target === ov) ov.classList.remove('open');
     });
   });
 
-  renderAll();
-
   /* ---------- Compartilhar EcoBairro (copiar link) ---------- */
   function copyEcoBairroLink(){
-    const url = "https://anakinskywalker3x721-cmyk.github.io/ecobairro_/";
+    const url = location.href;
     const showToast = ()=>{
       let toast = document.getElementById('copyToast');
       if(!toast){
@@ -1332,7 +1387,5 @@ const analytics = getAnalytics(app);
       document.body.removeChild(temp);
     }
   }
-</script>
-
 </body>
 </html>
